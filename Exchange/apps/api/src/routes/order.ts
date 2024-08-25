@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { RedisManager } from '../RedisManager';
-import { CANCEL_ORDER, CREATE_ORDER, GET_OPEN_ORDERS } from '../types';
+import { CANCEL_ORDER, CREATE_ORDER, GET_OPEN_ORDERS } from '../types/to';
+
 
 export const orderRouter = Router();
 
