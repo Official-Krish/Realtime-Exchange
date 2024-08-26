@@ -1,8 +1,8 @@
 import fs from "fs";
 import { fill, Order, Orderbook } from "./orderBook";
-import { CANCEL_ORDER, CREATE_ORDER, MessageFromApi } from "../types/fromApi"; 
+import { CANCEL_ORDER, CREATE_ORDER, GET_DEPTH, GET_OPEN_ORDERS, MessageFromApi, ON_RAMP } from "../types/fromApi"; 
 import { RedisManager } from "../RedisManager";
-import { TRADE_ADDED } from "../types";
+import { ORDER_UPDATE, TRADE_ADDED } from "../types";
 
 export const BASE_CURRENCY = "USDT";
 interface UserBalance {
@@ -158,6 +158,71 @@ export class Engine {
                     console.log("Error cancelling order", e);
                 }
                 break;
+            
+            case GET_OPEN_ORDERS:
+                try{
+                    const openOrderbook = this.orderbooks.find(o => o.ticker() === message.data.market);
+
+                    if (!openOrderbook){
+                        throw new Error("Market not found");
+                    }
+
+                    const openOrders = openOrderbook.getOpenOrders(message.data.userId);
+
+                    RedisManager.getInstance().sendToApi(clientId, {
+                        type: "OPEN_ORDERS",
+                        payload: openOrders
+                    });
+                }catch(e){
+                    console.log("Error getting open orders", e);
+                }
+                break;
+            
+
+            case ON_RAMP:
+                const userId = message.data.userId;
+                const amount = Number(message.data.amount);
+                this.onRamp(userId, amount);
+                break;
+
+            case GET_DEPTH:
+                try{
+                    const market = message.data.market;
+                    const orderbook = this.orderbooks.find(o => o.ticker() === market);
+
+                    if(!orderbook){
+                        throw new Error("Market not found");
+                    }
+                    RedisManager.getInstance().sendToApi(clientId, {
+                        type: "DEPTH",
+                        payload: orderbook.getDepth()
+                    });
+                }catch(e){
+                    console.log("Error getting depth", e);
+                    RedisManager.getInstance().sendToApi(clientId, {
+                        type: "DEPTH",
+                        payload: {
+                            bids: [],
+                            asks: []
+                        }
+                    });
+                }
+                break;
+        }
+    }
+
+
+    onRamp(userId: string, amount: number){
+        const UserBalance = this.balances.get(userId);
+        if (!UserBalance){
+            this.balances.set(userId, {
+                [BASE_CURRENCY]: {
+                    available: amount,
+                    locked: 0
+                },
+            });
+        }else{
+            UserBalance[BASE_CURRENCY].available += amount;
         }
     }
 
@@ -207,9 +272,33 @@ export class Engine {
         this.createDbTrades(fills, market, userId);
         this.publishWsDepthUpdates(fills, price,side, market);
         this.publishWsTrades(fills, market, userId);
-
+        this.updateDbOrders(order, executedQty, fills, market);
 
         return { executedQty, fills, orderId: order.orderId };
+    }
+
+    updateDbOrders(order: Order, executedQty: number, fills: fill[], market: string) {
+        RedisManager.getInstance().pushMessage({
+            type: ORDER_UPDATE,
+            data: {
+                orderId: order.orderId,
+                executedQty: executedQty.toString(),
+                market: market,
+                price: order.price.toString(),
+                quantity: order.quantity.toString(),
+                side: order.side,
+            }
+        });
+
+        fills.forEach(fill => {
+            RedisManager.getInstance().pushMessage({
+                type: ORDER_UPDATE,
+                data: {
+                    orderId: fill.makerOrderId,
+                    executedQty: fill.quantity.toString()
+                }
+            });
+        });
     }
 
 

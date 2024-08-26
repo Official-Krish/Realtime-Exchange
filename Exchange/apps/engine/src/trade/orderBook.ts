@@ -198,4 +198,10 @@ export class Orderbook {
             return false;
         }
     }
+
+    getOpenOrders(userId : string) : Order[] {
+        const asks = this.asks.filter((ask) => ask.userId === userId);
+        const bids = this.bids.filter((bid) => bid.userId === userId);
+        return [...asks, ...bids];
+    }
 }
