@@ -1,7 +1,8 @@
 import fs from "fs";
 import { fill, Order, Orderbook } from "./orderBook";
-import { CREATE_ORDER, MessageFromApi } from "../types/fromApi"; 
+import { CANCEL_ORDER, CREATE_ORDER, MessageFromApi } from "../types/fromApi"; 
 import { RedisManager } from "../RedisManager";
+import { TRADE_ADDED } from "../types";
 
 export const BASE_CURRENCY = "USDT";
 interface UserBalance {
@@ -79,33 +80,105 @@ export class Engine {
         });
     }
 
-    process({ message, clientId } : {message: MessageFromApi, clientId : string}){
-        switch(message.type){
+    process({ message, clientId }: {message: MessageFromApi, clientId: string}) {
+        switch (message.type) {
             case CREATE_ORDER:
-                try{
+                try {
                     const { executedQty, fills, orderId } = this.createOrder(message.data.market, message.data.price, message.data.quantity, message.data.side, message.data.userId);
-
                     RedisManager.getInstance().sendToApi(clientId, {
                         type: "ORDER_PLACED",
+                        // @ts-ignore
                         payload: {
                             orderId,
                             executedQty,
                             fills
                         }
                     });
-                } catch(e){
+                } catch (e) {
                     console.log(e);
                     RedisManager.getInstance().sendToApi(clientId, {
-                        type : "ORDER_CANCELLED",
-                        payload:{
-                            orderId : "",
+                        type: "ORDER_CANCELLED",
+                        payload: {
+                            orderId: "",
                             executedQty: 0,
                             remainingQty: 0
                         }
                     });
                 }
                 break;
+            case CANCEL_ORDER:
+                try{
+                    const orderId = message.data.orderId;
+                    const cancelMarket = message.data.market;
+                    const cancelOrderbook = this.orderbooks.find(o => o.ticker() === cancelMarket);
+                    const quoteAsset = cancelMarket.split("-")[1];
+                    if (!cancelOrderbook){
+                        throw new Error("Market not found");
+                    }
+
+                    const order = cancelOrderbook.asks.find(o => o.orderId === orderId) || cancelOrderbook.bids.find(o => o.orderId === orderId);
+
+                    if (!order){
+                        throw new Error("Order not found");
+                    }
+
+                    if (order.side === "buy"){
+                        const price = cancelOrderbook.cancelBid(order);
+                        const leftQuantity = (order.quantity - order.filled) * order.price;
+
+                        this.balances.get(order.userId)![BASE_CURRENCY].available += leftQuantity;
+
+                        this.balances.get(order.userId)![BASE_CURRENCY].locked -= leftQuantity;
+
+                        if (price){
+                            this.sendUpdatedDepthAt(price as string, cancelMarket);
+                        }
+                    }
+                    else{
+                        const price = cancelOrderbook.cancelAsk(order);
+                        const leftQuantity = order.quantity - order.filled;
+
+                        this.balances.get(order.userId)![quoteAsset].available += leftQuantity;
+
+                        this.balances.get(order.userId)![quoteAsset].locked -= leftQuantity;
+
+                        if (price){
+                            this.sendUpdatedDepthAt(price as string, cancelMarket);
+                        }
+                    }
+
+                    RedisManager.getInstance().sendToApi(clientId, {type: "ORDER_CANCELLED", 
+                        payload: { 
+                            orderId, 
+                            executedQty:0, 
+                            remainingQty: 0 
+                        }
+                    });
+                }catch(e){
+                    console.log("Error cancelling order", e);
+                }
+                break;
+        }
+    }
+
+
+    sendUpdatedDepthAt(price: string, market: string){
+        const orderbook = this.orderbooks.find(o => o.ticker() === market);
+        if (!orderbook){
+            return;
+        }
+        const depth = orderbook.getDepth();
+        const updateAsks = depth?.asks.filter(x => x[0] === price);
+        const updateBids = depth?.bids.filter(x => x[0] === price);
+
+        RedisManager.getInstance().publishMessage(`depth@${market}`,{
+            stream: `depth@${market}`,
+            data: {
+                a : updateAsks.length ? updateAsks : [[price, "0"]], 
+                b : updateBids?.length ? updateBids : [[price, "0"]], 
+                e : "depth"
             }
+        });
     }
 
     createOrder(market: string, price: string, quantity: string, side: "buy" | "sell", userId: string){
@@ -131,9 +204,85 @@ export class Engine {
         const { fills, executedQty } = orderbook.addOrder(order);
 
         this.updateBalances(fills, baseAsset, quoteAsset, executedQty,side, userId);
+        this.createDbTrades(fills, market, userId);
+        this.publishWsDepthUpdates(fills, price,side, market);
+        this.publishWsTrades(fills, market, userId);
 
 
         return { executedQty, fills, orderId: order.orderId };
+    }
+
+
+    publishWsTrades(fills: fill[], market : string, userId: string){
+        fills.forEach(fill =>{
+            RedisManager.getInstance().publishMessage(`trade@${market}`,{
+                stream : `trade@${market}`,
+                data : {
+                    e: "trade",
+                    t : fill.tradeId,
+                    m : fill.otherUserId === userId,
+                    p : fill.price,
+                    q : fill.quantity.toString(),
+                    s : market,
+                }
+            })
+        })
+    }
+
+
+    publishWsDepthUpdates(fills: fill[], price: string, side: "buy" | "sell", market: string){
+        const orderbook = this.orderbooks.find(o => o.ticker() === market);
+        if (!orderbook){
+            return;
+        }
+        const depth = orderbook.getDepth();
+        if (side === "buy"){
+            const updateAsks = depth?.asks.filter(x => fills.map(f => f.price).includes(x[0].toString()));
+            const updateBids = depth?.bids.find(x => x[0] === price);
+            console.log("publish ws depth updates", updateAsks, updateBids);
+
+            RedisManager.getInstance().publishMessage(`depth@${market}`,{
+                stream: `depth@${market}`,
+                data: {
+                    a : updateAsks,
+                    b : updateBids? [updateBids] : [],
+                    e : "depth"
+                }
+            });
+        }
+
+        if (side === "sell"){
+            const updateAsks = depth?.asks.find(x => x[0] === price);
+            const updateBids = depth?.bids.filter(x => fills.map(f => f.price).includes(x[0].toString()));
+            console.log("publish ws depth updates", updateAsks, updateBids);
+
+            RedisManager.getInstance().publishMessage(`depth@${market}`,{
+                stream: `depth@${market}`,
+                data: {
+                    a : updateAsks? [updateAsks] : [],
+                    b : updateBids,
+                    e : "depth"
+                }
+            });
+        }
+    }
+
+
+    createDbTrades(fills: fill[], market: string, userId: string){
+        fills.forEach(fill => {
+            RedisManager.getInstance().pushMessage({
+                type: TRADE_ADDED,
+                data:{
+                    market : market,
+                    id : fill.tradeId.toString(),
+                    isBuyerMaker: fill.otherUserId === userId,
+                    price: fill.price,
+                    quantity: fill.quantity.toString(),
+                    quoteQuantity: (fill.quantity * Number(fill.price)).toString(),
+                    timestamp : Date.now(),
+                }
+            });
+        });
     }
 
 
