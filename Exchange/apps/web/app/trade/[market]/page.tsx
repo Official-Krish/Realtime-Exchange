@@ -12,6 +12,9 @@ export default function Page() {
                 <div className="flex flex-col flex-1">
                     <TradeView market={market as string} />
                 </div>
+                <div className="flex flex-col w-[250px]">
+                    <Depth market={market as string} /> 
+                </div>
             </div>
         </div>
     </div>

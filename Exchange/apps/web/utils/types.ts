@@ -22,3 +22,18 @@ export interface KLine {
     trades: string;
     volume: string;
 }
+
+export interface Depth {
+    bids: [string, string][],
+    asks: [string, string][],
+    lastUpdateId: string
+}
+
+export interface Trade {
+    "id": number,
+    "isBuyerMaker": boolean,
+    "price": string,
+    "quantity": string,
+    "quoteQuantity": string,
+    "timestamp": number
+}
