@@ -19,11 +19,10 @@ export default function Page() {
                 </div>
             </div>
         </div>
-        <div className="w-[10px] flex-col border-slate-800 border-l"></div>
-            <div>
-                <div className="flex flex-col w-[250px]">
-                    <SwapUI market = {market as string} />
-                </div>
+        <div>
+            <div className="flex flex-col w-[250px] border-l border-slate-800">
+                <SwapUI market = {market as string} />
+            </div>
         </div>
     </div>
 }
