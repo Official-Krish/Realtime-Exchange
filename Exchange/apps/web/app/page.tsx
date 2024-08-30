@@ -1,11 +1,17 @@
-import Image from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
-
+"use client"
+import { hero } from './components/Hero';
+import TrendingCoins from './components/TrendingCoins';
 export default function Home() {
   return (
     <div >
-      Landing Page
+      {hero()}
+      <TrendingCoins/>
+
+      <div className='w-full h-screen bg-primary'>
+
+      </div>
+
     </div>
+
   );
 }
