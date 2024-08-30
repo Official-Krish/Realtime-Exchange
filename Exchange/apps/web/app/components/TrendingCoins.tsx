@@ -77,7 +77,7 @@ const TrendingCoins = () => {
 
                                     <div className="justify-between items-center flex gap-4 pl-4 mt-4">
 
-                                        <Link href={`/${item.id}`}>
+                                        <Link href={`/`}>
                                         <div className='trendingUpper-1 flex items-center gap-2'>
                                             <img src={item.image} className="w-10 h-10" alt='ada' />
                                             <p className='font-semibold uppercase text-white'> {item.symbol.substring(0, 8)} </p>
