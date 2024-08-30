@@ -353,7 +353,7 @@ export const coinsTable = () => {
                             {cryptoData.slice(page * 20 - 20, page * 20).map((coin, index) => (
                                 <tr key={coin.id}>
                                     <td className="py-6 cursor-pointer">
-                                        <Link href={`/${coin.id}`}>
+                                        <Link href={`/trade/${coin.id}_USDC`}>
                                             <img
                                                 src={coin.image}
                                                 className="sm:w-12 sm:h-12 w-9 h-9 inline-block mr-2"

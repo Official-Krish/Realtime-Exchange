@@ -21,9 +21,9 @@ export const hero = () => {
                         <div className="heroInnerChild1 flex flex-col gap-4">
                             <div>
                                 <p className='text-4xl interFont font-normal text-white'>
-                                    Middle East Leadger <br />
-                                    in Market and OTC <br />
-                                    transactions
+                                    Trade Beyond Boundaries:  <br />
+                                    Your Gateway to Digital <br />
+                                    Assets.
                                 </p>
                             </div>
 
