@@ -63,7 +63,7 @@ const TrendingCoins = () => {
 
 
     return (
-        <div className={"relative bg-primary py-8"}>
+        <div className={"relative bg-main py-8"}>
             <p className="text-2xl font-medium py-4 px-7 text-white">Market Trend </p>
 
             <div>

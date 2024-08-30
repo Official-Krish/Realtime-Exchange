@@ -8,7 +8,7 @@ import heroCarouselImage5 from "../../assets/heroCarouselImage4.png"
 import heroCarouselImage6 from "../../assets/heroCarouselIMage5.png"
 
 export const hero = () => {
-    return <div className='grid grid-cols-2 bg-primary'>
+    return <div className='grid grid-cols-2 bg-main'>
         <div className="border border-slate-800">
             <div className='flex'>
                 <div className="w-ful h-24"></div>

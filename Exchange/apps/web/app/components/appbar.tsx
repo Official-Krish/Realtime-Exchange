@@ -1,6 +1,6 @@
 export const Appbar = () => {
     return (
-        <div className="h-14 bg-primary border-b border-slate-800">
+        <div className="h-14 bg-main border-b border-slate-800">
             <div className="flex flex-row justify-between h-full px-6">
                 <div className="flex space-x-12 items-center">
                     <div className="font-semibold text-xl text-white">Exchange</div>
