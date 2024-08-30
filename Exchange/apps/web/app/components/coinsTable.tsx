@@ -418,8 +418,8 @@ export const coinsTable = () => {
                         key={item}
                         className={`${
                             active === item
-                                ? "bg-black text-white indivitualPage2 font-semibold cursor-pointer"
-                                : "indivitualPage font-semibold cursor-pointer"
+                                ? "underline text-black font-black cursor-pointer"
+                                : "font-semibold cursor-pointer"
                         }`}
                         onClick={(e) => {
                             if (e.target instanceof HTMLParagraphElement) {
