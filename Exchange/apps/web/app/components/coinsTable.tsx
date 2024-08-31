@@ -412,7 +412,7 @@ export const coinsTable = () => {
             <br />
     
             {/* PAGINATION */}
-            <div className="flex gap-4 flex-wrap justify-center">
+            <div className="flex gap-4 flex-wrap justify-center pb-7">
                 {pages.map((item) => (
                     <p
                         key={item}
