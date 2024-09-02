@@ -1,6 +1,12 @@
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 
-export const LimitOrder = () => {
+export const LimitOrder = ({market} : {market: string}) => {
+    let marketURL = market.substring(0,3).toLowerCase();
+    if(marketURL == "bit"){
+        marketURL = "btc";
+    }
+    const session = useSession();
     const [selectedCheckbox, setSelectedCheckbox] = useState(null);
 
     const handleCheckboxClick = (checkbox : any) => {
@@ -29,7 +35,7 @@ export const LimitOrder = () => {
             <input placeholder="0.00" className="h-12 rounded-lg border bg-[var(--background)] pr-12 text-right text-2xl text-white border-gray-800" type="text" />
             <div className="flex flex-row absolute right-1 top-1 p-2">
                 <div className="relative pt-2">
-                    <img src="https://backpack.exchange/_next/image?url=%2Fcoins%2Fmax.png&w=48&q=75" className="w-6 h-6" />
+                    <img src={`https://backpack.exchange/_next/image?url=%2Fcoins%2F${marketURL}.png&w=48&q=75`} className="w-6 h-6" />
                 </div>
             </div>
         </div>
@@ -59,14 +65,14 @@ export const LimitOrder = () => {
             <input placeholder="0.00" className="h-12 rounded-lg border bg-[var(--background)] pr-12 text-right text-2xl text-white border-gray-800" type="text" />
             <div className="flex flex-row absolute right-1 top-1 p-2">
                 <div className="relative pt-2">
-                    <img src="https://backpack.exchange/_next/image?url=%2Fcoins%2Fusdc.png&w=48&q=75" className="w-6 h-6" />
+                    <img src={`https://backpack.exchange/_next/image?url=%2Fcoins%2Fusdc.png&w=48&q=75`} className="w-6 h-6" />
                 </div>
             </div>
         </div>
     </div>
     <div className="pt-3 px-2">
         <button className="w-full rounded-xl border border-slate-800 py-3 bg-white font-semibold">
-            Sign up to trade
+            {session.data?.user ? 'Place Order' : 'Signup to Place Order'}
         </button>
     </div>
 

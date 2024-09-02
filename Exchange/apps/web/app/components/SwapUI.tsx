@@ -36,7 +36,7 @@ export const SwapUI = ({market}: {market: string}) => {
                 </div>
             </div>
             <div>
-                {type === "limit" ? <LimitOrder/> : <MarketOrder/>}
+                {type === "limit" ? <LimitOrder market={market}/> : <MarketOrder/>}
             </div>
             
         </div>
@@ -72,7 +72,7 @@ function SellButton({ activeTab, setActiveTab } : { activeTab: string, setActive
             onClick={() => setActiveTab('sell')}
         >
             <p className="text-center text-sm font-semibold text-red-500">
-                Buy
+                Sell
             </p>
         </div>
     );

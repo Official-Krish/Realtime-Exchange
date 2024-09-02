@@ -68,13 +68,18 @@ export const MarketBar = ({market} : {market: string}) => {
 }
 
 function Ticker({market} : {market: string}) {
+    let marketURL = market.substring(0,3).toLowerCase();
+    if(marketURL == "bit"){
+        marketURL = "btc";
+    }
     return <div className="flex h-[60px] space-x-4 cursor-pointer">
         <div className="flex flex-row relative ml-2 -mr-4">
-            <img src="https://backpack.exchange/_next/image?url=%2Fcoins%2Fsol.png&w=48&q=75" className="w-12 h-12 rounded-full mt-2" />
+            <img src={`https://backpack.exchange/_next/image?url=%2Fcoins%2F${marketURL}.png&w=48&q=75`} className="w-12 h-12 rounded-full mt-2" />
 
             <div className="mt-4 px-4 ">
-                <div className="text-lg text-white font-bold hover:text-slate-300"> {market.replace("_", " / ")} </div>
+                <div className="text-lg text-white font-bold hover:text-slate-300"> {marketURL.toUpperCase()}/{market.split("_")[1]?.substring(0,4).toUpperCase()} </div>
             </div>
         </div>
     </div>
 }
+

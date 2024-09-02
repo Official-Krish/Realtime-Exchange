@@ -1,22 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaSearch } from "react-icons/fa"
-import { AiFillDollarCircle, AiOutlineStar, AiFillDelete } from "react-icons/ai"
-import { RxCrossCircled, RxCross1 } from "react-icons/rx"
+import { RxCrossCircled } from "react-icons/rx"
 import { FiTrendingDown } from "react-icons/fi"
 import { FiTrendingUp } from "react-icons/fi"
 import { AiFillCaretDown } from "react-icons/ai"
-import { AiOutlineDollarCircle, AiFillStar } from "react-icons/ai"
+import { AiOutlineDollarCircle } from "react-icons/ai"
 import { BiRupee } from "react-icons/bi"
 import { useToast } from '@chakra-ui/react'
 import {
-    Drawer,
     DrawerBody,
-    DrawerFooter,
-    DrawerHeader,
-    DrawerOverlay,
     DrawerContent,
-    DrawerCloseButton,
-    DrawerContentProps,
     DrawerProps,
 
 } from '@chakra-ui/react'
@@ -207,10 +200,6 @@ export const coinsTable = () => {
         setTabState("all coins")
     }
 
-    // add to favourites drawer 
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [sortOrder, setSortOrder] = useState('none');
-
 
     const lowTOhighHanler = () => {
 
@@ -351,7 +340,7 @@ export const coinsTable = () => {
     
                         <tbody>
                             {cryptoData.slice(page * 20 - 20, page * 20).map((coin, index) => (
-                                <tr key={coin.id}>
+                                <tr key={coin.id = coin.id.substring(0,3).toUpperCase() == "BIT" ? "BTC" : coin.id}>
                                     <td className="py-6 cursor-pointer">
                                         <Link href={`/trade/${coin.id}_USDC`}>
                                             <img
