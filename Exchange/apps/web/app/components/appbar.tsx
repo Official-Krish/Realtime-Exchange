@@ -1,3 +1,6 @@
+"use client"
+import { signIn } from "next-auth/react";
+
 export const Appbar = () => {
     return (
         <div className="h-14 bg-main border-b border-slate-800">
@@ -51,7 +54,7 @@ function signup(){
 }
 function signin(){
     return <div>
-        <button className={`rounded-xl text-sky-500 px-3 py-1.5 text-sm font-semibold`}
+        <button onClick={signIn} className={`rounded-xl text-sky-500 px-3 py-1.5 text-sm font-semibold`}
             style={{ backgroundColor: 'rgba(76, 148, 255, .16)' }}>
             Sign in
         </button>
