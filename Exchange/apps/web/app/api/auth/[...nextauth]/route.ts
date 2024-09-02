@@ -7,18 +7,6 @@ import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcrypt';
 import { Adapter } from 'next-auth/adapters';
 
-declare module 'next-auth' {
-    interface Session {
-        user: {
-            id: string;
-        } & User;
-    }
-
-    interface JWT {
-        uid: string;
-    }
-}
-
 const handler = NextAuth({
     adapter: PrismaAdapter(prisma) as Adapter,
     providers: [
@@ -37,12 +25,13 @@ const handler = NextAuth({
                 email: { label: 'Email', type: 'text', placeholder: 'Email' },
                 password: { label: 'Password', type: 'password', placeholder: 'Password' },
             },
+            //@ts-ignore
             async authorize(credentials, req) {
                 if (!credentials?.email || !credentials?.password) {
                     throw new Error('Invalid credentials');
                 }
 
-                let user = await prisma.user.findUnique({
+                let user = await prisma.user.findFirst({
                     where: {
                         email: credentials.email,
                     },
@@ -56,40 +45,18 @@ const handler = NextAuth({
                             password: await bcrypt.hash(credentials.password, 10),
                         },
                     });
-                    return {
-                        id: newUser.id.toString(),
-                        email: newUser.email,
-                        name: newUser.name,
-                    } as User;
                 } else {
                     const isCorrectPassword = await bcrypt.compare(credentials.password, user.password);
                     if (!isCorrectPassword) {
                         throw new Error('Invalid credentials');
                     }
-                    return {
-                        id: user.id.toString(),
-                        email: user.email,
-                        name: user.name,
-                    } as User;
                 }
             },
         }),
     ],
-    secret: process.env.NEXTAUTH_SECRET || "secr3t",
-    callbacks: {
-        async session({ session, token }) {
-            if (session.user && token.uid) {
-                session.user.id = token.uid as string;
-            }
-            return session;
-        },
-        async jwt({ token, user }) {
-            if (user) {
-                token.uid = user.id;
-            }
-            return token;
-        },
+    session: {
+        strategy: 'jwt',
     },
+    secret: process.env.NEXTAUTH_SECRET || "secr3t",
 });
-
 export { handler as GET, handler as POST };

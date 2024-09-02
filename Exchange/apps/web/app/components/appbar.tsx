@@ -1,7 +1,8 @@
 "use client"
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export const Appbar = () => {
+    const session = useSession();
     return (
         <div className="h-14 bg-main border-b border-slate-800">
             <div className="flex flex-row justify-between h-full px-6">
@@ -23,15 +24,23 @@ export const Appbar = () => {
                     </div>
                 </div>
 
-
-                <div className="flex space-x-4 text-white items-center">
-                    <div>
-                        {signup()}
+                {session.data?.user ?
+                    <div className="flex space-x-4 text-white items-center">
+                        <div>
+                            {LogOut()}
+                        </div>
                     </div>
-                    <div>
-                        {signin()}
+                    :
+                    <div className="flex space-x-4 text-white items-center">
+                        <div>
+                            {signup()}
+                        </div>
+                        <div>
+                            {signin()}
+                        </div>
                     </div>
-                </div>
+                }
+                
             </div>
         </div>
     );
@@ -46,7 +55,7 @@ function search() {
 
 function signup(){
     return <div>
-        <button className={`rounded-xl text-green-400 px-3 py-1.5 text-sm font-medium`}
+        <button onClick={() => signIn} className={`rounded-xl text-green-400 px-3 py-1.5 text-sm font-medium`}
             style={{ backgroundColor: 'rgba(0, 200, 0, 0.2)' }}>
             Sign up
         </button>
@@ -54,9 +63,18 @@ function signup(){
 }
 function signin(){
     return <div>
-        <button onClick={signIn} className={`rounded-xl text-sky-500 px-3 py-1.5 text-sm font-semibold`}
+        <button onClick={() => signIn} className={`rounded-xl text-sky-500 px-3 py-1.5 text-sm font-semibold`}
             style={{ backgroundColor: 'rgba(76, 148, 255, .16)' }}>
             Sign in
+        </button>
+    </div>
+}
+
+function LogOut(){
+    return <div>
+        <button onClick={() => signOut} className={`rounded-xl text-sky-500 px-3 py-1.5 text-sm font-semibold`}
+            style={{ backgroundColor: 'rgba(76, 148, 255, .16)' }}>
+            Sign out
         </button>
     </div>
 }
